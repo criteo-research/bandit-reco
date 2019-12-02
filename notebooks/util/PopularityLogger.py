@@ -14,8 +14,6 @@ organic_user_count_args = {
     'weight_history_function': None,
 }
 
-def fast_choice(probs, p):
-    return np.searchsorted(probs.cumsum(),p)
 
 class OrganicUserEventCounterModelBuilder(AbstractFeatureProvider):
     def __init__(self, config):
@@ -34,11 +32,10 @@ class OrganicUserEventCounterModelBuilder(AbstractFeatureProvider):
                     self.rng = RandomState(self.config.random_seed)
 
             def act(self, observation, features):
-                features = [count + self.config.epsilon for count in features]
-                action_proba = features / np.sum(features, axis = 0)
+                features = np.array([count + self.config.epsilon for count in features])
+                action_proba = features / np.sum(features, axis=0)
                 if self.config.select_randomly:
-                    action = self.rng.choice(self.config.num_products, p = action_proba)
-                    #action = fast_choice(action_proba, self.rng.random_sample())
+                    action = self.rng.choice(self.config.num_products, p=action_proba)
                     ps = action_proba[action]
                     ps_all = action_proba
                 else:
@@ -60,6 +57,7 @@ class OrganicUserEventCounterModelBuilder(AbstractFeatureProvider):
             OrganicUserEventCounterModel(self.config)
         )
 
+
 class OrganicUserEventCounterAgent(ModelBasedAgent):
     """
     Organic Event Counter Agent
@@ -67,7 +65,7 @@ class OrganicUserEventCounterAgent(ModelBasedAgent):
     and selects an Action for the most frequently shown Product.
     """
 
-    def __init__(self, config = Configuration(organic_user_count_args)):
+    def __init__(self, config=Configuration(organic_user_count_args)):
         super(OrganicUserEventCounterAgent, self).__init__(
             config,
             OrganicUserEventCounterModelBuilder(config)
